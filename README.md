@@ -1,1 +1,1 @@
-Upgrade from [https://github.com/fairuzmn/socketio_chat](THIS)
+Upgrade from [SocketIO Chat](https://github.com/fairuzmn/socketio_chat)
