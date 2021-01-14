@@ -1,144 +1,62 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <script src="js/jquery.js"></script>
-    <script src="https://cdn.socket.io/socket.io-3.0.1.min.js"></script>
-    <style>
-        .btn-active {
-            background-color: greenyellow;
-        }
-    </style>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+
+    <title>Login</title>
 </head>
 
 <body>
-    <form onsubmit="return enterName()">
-        <input type="text" placeholder="Name" id="name" required>
-        <input type="submit" value="Login">
-    </form>
+    <div class="container" style="margin-top: 50px;">
+        <div class="alert alert-danger" role="alert" style="display: none;">
+            Username / Password Salah
+        </div>
+        <form onsubmit="return handleSubmit()">
+            <div class="formLogin align-middle">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" class="form-control" id="username" placeholder="Enter username" required autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" class="form-control" id="password" placeholder="Password" required autocomplete="off">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100" style="margin-top: 10px;">Login</button>
+        </form>
+    </div>
 
-    <ul id="users"></ul>
 
-    <form onsubmit="return enterMessage()">
-        <input type="text" placeholder="Message" id="message" required>
-        <input type="submit" value="Kirim">
-    </form>
-
-    <ul id="messages"></ul>
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/popper.min.js"></script>
+    <script src="assets/js/bootstrap.min.js"></script>
 </body>
-
-</html>
 <script>
-    /*
-
-    .emit adalah mengirim
-    .on adalah lisenting
-
-    berlaku pada cleint dan server
-
-    source https://www.youtube.com/watch?v=Ozrm_xftcjQ
-
-    */
-   
-    // initiate socket io 
-    // var io = io("http://localhost:3000"); //error cross origin not allowed
-
-    // solved with this
-    var io = io('http://localhost:3000', {
-        transports: ['websocket', 'polling', 'flashsocket']
-    });
-
-    // listen from server
-    io.on('user_connected', (username) => {
-        document.getElementById('users').innerHTML +=
-            `<li><button onclick='onUserSelected(this.innerHTML,this.id)' id='${username}'>${username}</li>`
-    })
-
-    // listen on new messages
-    io.on('new_message',(data) => {
-        document.getElementById('messages').innerHTML +=
-            `<li>${data.sender} : ${data.message}</li>`
-    })
-
-    // global variable 
-    let receiver = '',
-        sender = ''
-
-    enterName = () => {
-        if(sender != ''){
-            return false
-        }
-
-        const name = document.getElementById('name').value
-
-        // send username connected to server
-        io.emit('user_connected', name)
-
-        // set sender
-        sender = name
-
-        document.getElementById('name').readOnly = true
-
-        // prevent the form from submitting
-        return false;
-    }
-
-    onUserSelected = (usernameSelected,id) => {
-        if(usernameSelected == sender){
-            return alert("Tidak Bisa memilih Diri Sendiri")
-        }
-        // remove all btn-active in button
-        $('.btn-active').removeClass('btn-active')
-
-        // add class on selected elemnt
-        document.getElementById(id).classList.add('btn-active')
-        receiver = usernameSelected
-
-        // display all pervious messages
-        $.ajax({
-            url:'http://localhost:3000/get_messages',
-            method:'POST',
-            data:{
-                sender:sender,
-                receiver:receiver,
-            },
-            success:function(response){
-                // console.log(response)
-                messages = JSON.parse(response)
-                let messagesAll = '';
-                messages.map(item => {
-                    messagesAll += `<li>${item.message}</li>`
-                })
-                document.getElementById('messages').innerHTML = messagesAll
+    const handleSubmit = () => {
+        $.post('http://localhost:3000/login', {
+            username: $('#username').val(),
+            password: $('#password').val()
+        }).done((result) => {
+            result = JSON.parse(result)
+            if (result.length > 0) {
+                window.location = `room.php?id=${result[0].id}`
+            } else {
+                $('.alert').fadeIn()
+                setInterval(() => {
+                    $('.alert').fadeOut()
+                }, 2500)
             }
         })
+        return false;
     }
-
-    enterMessage = () => {
-        // get message
-        const message = document.getElementById('message').value
-
-        if (sender != '') {
-            if (receiver != '') {
-
-                // send to server
-                io.emit('send_message', {
-                    receiver: receiver,
-                    sender: sender,
-                    message: message
-                })
-            } else {
-                alert('Pilih Penerima Pesan')
-            }
-        } else {
-            alert('Masukkan Nama Kamu')
-        }
-
-        return false
-    }
-
-    
 </script>
+
+</html>
